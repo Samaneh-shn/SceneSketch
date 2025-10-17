@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global clamp to stop page-level horizontal scroll (outside the iframe) */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ==== Retro Book Skin ==== */
+:root{
+  --bg:#f0e7db; --paper:#fbf7ef; --ink:#22211f; --line:#22211f;
+  --mustard:#f5e77c; --brand:#ee8b52; --link:#2a50c8; --muted:#eadfcd;
+}
+body.retro{ background:var(--bg); color:var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.retro-box{ background:var(--paper); border:2px solid var(--line); border-radius:12px; box-shadow:none; }
+.app-shell{ max-width:1200px; margin:24px auto; display:grid; grid-template-columns:96px 1fr; gap:16px; overflow-x:hidden; }
+.rail { position: sticky; top:16px; height:calc(100vh - 32px); padding:12px 10px; z-index: 10; }
+.rail .nav{ display:flex; flex-direction:column; gap:12px; }
+.rail .nav-btn{ display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11px; padding:10px 8px; border:2px solid var(--line); border-radius:10px; background:transparent; cursor:pointer; }
+.rail .nav-btn.active{ background:#ffe1c9; color:#cb5400; }
+.header-bar{ display:flex; gap:12px; align-items:center; padding:10px; border-radius:12px; }
+.search-wrap{ flex:1; display:flex; align-items:center; gap:8px; background:var(--mustard); border:2px solid var(--line); padding:10px 12px; border-radius:10px; }
+.search-wrap input{ background:transparent; border:none; outline:none; width:100%; font-size:14px; }
+.user-card,.notify{ display:flex; align-items:center; gap:8px; padding:8px 10px; }
+.user-card img{ width:28px; height:28px; border-radius:50%; border:2px solid var(--line); }
+.notify{ width:44px; height:44px; justify-content:center; }
+
+/* ====== MAIN CONTENT ROW ====== */
+.content-row{
+  position:relative;
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:16px;
+  max-width:100%;
+  overflow-x:hidden;
+  align-items:start;
+}
+
+.reader-wrap{ padding:14px; border-radius:12px; max-width:100%; overflow-x:hidden; }
+.page-frame{ position:relative; padding:12px; border-radius:10px; max-width:100%; overflow:hidden; }
+.page-frame .title-strip{ position:absolute; top:8px; width:100%; text-align:center; font-size:12px; opacity:.7; }
+
+/* ===== Header actions (Tools + Highlighter) row ===== */
+.header-actions {
+  display:flex;
+  flex-direction:row;       /* keep side-by-side */
+  align-items:center;
+  gap:10px;
+  flex-wrap:nowrap;
+}
+.header-actions .tool-btn{
+  display:inline-flex;      /* guard against inherited block/column */
+  align-items:center;
+  justify-content:center;
+}
+
+/* Tool buttons */
+.tool-btn{
+  width:46px; height:46px;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--line); border-radius:10px;
+  background:var(--paper); cursor:pointer;
+}
+.tool-btn.active{ background:var(--mustard); }
+
+/* === Right tool dock is retired (hide entirely to avoid layout squeeze) === */
+.tool-dock{ display:none !important; }
+
+/* Drawer container (slides over reader when open) */
+.tools-drawer{
+  position:absolute;
+  right:0; top:0;
+  height:100%;
+  width:360px; max-width:95vw;
+  transform:translateX(8px);
+  padding:12px;
+  display:flex; flex-direction:column; gap:10px;
+}
+
+/* Player bar */
+.player-bar{ position:sticky; bottom:10px; z-index:50; padding:10px; display:flex; align-items:center; gap:12px; background:var(--brand); color:#111; border:2px solid var(--line); border-radius:12px; }
+.player-meta{ min-width:0; display:flex; align-items:center; gap:10px; flex:1; }
+.player-meta img{ width:40px; height:40px; border-radius:8px; border:2px solid var(--line); }
+.player-title{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.player-progress{ flex:2; display:flex; align-items:center; gap:10px; }
+.player-progress .progress{ height:8px; background:#fbe0d1; border-radius:4px; border:2px solid var(--line); }
+.progress-bar{ height:100%; background:#111; transition:width .3s; }
+
+/* ===== Reader host ===== */
+#reader {
+  width: 100%;
+  height: 500px;
+  border: none;
+  overflow: hidden;
+  transition: opacity .3s;
+}
+#reader.fade-in { opacity: 1; }
+#reader:not(.fade-in) { opacity: 0; }
+/* DO NOT style .epub-container / .epub-view / #reader iframe widths here. */
+
+/* floating copy button */
+.floating-button { position:absolute; background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; padding:6px; border-radius:50%; cursor:pointer; z-index:1000; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.floating-button i { font-size:14px; }
+
+/* modal */
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); justify-content:center; align-items:center; }
+.modal.show { display:flex; }
+.modal-content { background:white; padding:24px; border-radius:12px; width:90%; max-width:600px; }
+
+/* utility */
+.linkish{ color:var(--link); text-decoration:underline; cursor:pointer; }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 900px) {
+  .app-shell{ grid-template-columns: 72px 1fr; }
+  .content-row{ grid-template-columns: 1fr; }
+  .tools-drawer{ width: min(92vw, 360px); }
+}
+
+/* ==== Scene Generator (panel) ==== */
+.sg-panel{
+  position:relative;
+  width:360px;
+  max-width:95vw;
+  padding:12px;
+  display:flex; flex-direction:column; gap:12px;
+  background:var(--paper);
+  border:2px solid var(--line);
+  border-radius:12px;
+}
+.sg-header h3{ font-weight:700; font-size:18px; margin:0; }
+.sg-sub{ font-size:12px; opacity:.7; margin:2px 0 0; }
+
+.sg-card{
+  background:#fffaf0;
+  border:2px dashed var(--line);
+  border-radius:12px;
+  padding:10px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.sg-label{ font-size:12px; opacity:.8; }
+.sg-input{
+  width:100%; border:2px solid var(--line); border-radius:10px;
+  background:#fff; padding:8px 10px; font-size:14px; outline:none;
+}
+.sg-input:focus{ box-shadow:0 0 0 2px var(--mustard) inset; }
+.sg-select{
+  border:2px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff;
+}
+
+.sg-prompt{ background:#fff; min-height:120px; }
+
+/* BUTTON: make it inline so it doesn't span full width */
+.sg-btn{
+  display:inline-flex; align-items:center;
+  padding:8px 12px; border:2px solid var(--line); border-radius:10px;
+  background:var(--mustard); font-weight:600; cursor:pointer;
+}
+.sg-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.sg-btn.ghost{ background:#ffe1c9; }
+
+/* NEW: rows that force items on one line */
+.sg-controls{                 /* Art style + Make Prompt */
+  display:flex; align-items:center; gap:12px; flex-wrap:nowrap;
+}
+/* --- Equal width Generate / Regenerate row --- */
+.sg-gen-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* exactly two equal columns */
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sg-gen-row > .sg-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center; /* centers icon+text */
+}
+
+
+/* --- Save Prompt spans the full combined width --- */
+.sg-save-row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin-top:6px;
+}
+
+.sg-save-row > .sg-btn{
+  display:block;
+  width:100%;
+}
+
+
+
+
+/* Allow wrapping on narrow screens */
+@media (max-width:560px){
+  .sg-controls, .sg-gen-row{ flex-wrap:wrap; justify-content:flex-start; }
+}
+
+/* ==== Image card inside panel ==== */
+.sg-image-card{ padding:10px; border-radius:12px; background:var(--paper); border:2px solid var(--line); }
+.sg-image-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.sg-image-title{ font-weight:700; }
+.sg-image-tools{ display:flex; gap:8px; }
+.sg-mini-btn{ font-size:12px; padding:6px 8px; border:2px solid var(--line); border-radius:8px; background:#fff; cursor:pointer; }
+.sg-image-wrap{ position:relative; background:#fff; border:2px solid var(--line); border-radius:10px; padding:8px; text-align:center; }
+.sg-image{ max-width:100%; max-height:320px; object-fit:contain; border-radius:8px; cursor:zoom-in; }
+.sg-image_hint{ position:absolute; right:8px; bottom:6px; font-size:11px; opacity:.65; background:#fff5; padding:2px 6px; border-radius:6px; }
+
+
+/* ==== Lightbox ==== */
+.lb-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.65);
+  display:flex; flex-direction:column; z-index:9999;
+}
+.lb-toolbar{
+  display:flex; align-items:center; gap:8px;
+  margin:12px auto 8px; padding:8px 10px; width:min(720px, 92vw);
+  background:var(--paper); border:2px solid var(--line); border-radius:12px;
+}
+.lb-btn{
+  padding:6px 10px; border:2px solid var(--line); background:#fff; border-radius:8px; cursor:pointer;
+}
+.lb-spacer{ flex:1; }
+.lb-canvas{
+  flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:grab;
+}
+.lb-canvas:active{ cursor:grabbing; }
+.lb-img{
+  user-select:none; will-change:transform;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  border-radius:10px;
+}
+
+/* small screens */
+@media (max-width: 900px) {
+  .sg-panel{ width:auto; }
+  .sg-image{ max-height:240px; }
+}
+
+/* ==== Sidebar grouping (top vs bottom) ==== */
+.nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.nav-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.nav-bottom {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  gap: 0.75rem;
+}
+
